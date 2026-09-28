@@ -45,3 +45,92 @@ A second fictional benchmark was added during Phase 2 to compare the original WT
 The serialized WTM 4.3 and WTM 1.0 benchmark JSON outputs produced no diff.
 
 No production company data is used in this benchmark.
+
+
+## Phase 4 calculator/tooling benchmark
+
+Phase 4 adds regression coverage around the WTM 4.3 calculator workflows while continuing to use the same Phase 1 trajectory engine. The fictional benchmark checks:
+
+- Trajectory Converter result at 175 mMD
+- converter validation order
+- 3-decimal converter export rounding
+- regular 50 mMD trajectory splitting
+- Survey / Interpolated classification
+- optional inclusion of original survey stations
+- explicit multiple-TVD-solution handling
+
+Selected reference values:
+
+```text
+DEMO-01 @ 175 mMD
+X             500040.12261905783
+Y             9200027.561134199
+mTVD          165.6100919758739
+mASL          1334.389908024126
+Azimuth       71.68579300826758°
+Inclination   31.595397252527732°
+
+50 mMD split  0, 50, 100, 150, 200, 250, 300, 350
++ survey      0, 50, 100, 150, 200, 220, 250, 300, 350
+```
+
+The executable pure-TypeScript parity harness passed after the Phase 4 migration.
+
+
+## Phase 5 Well Distance benchmark
+
+Phase 5 adds workflow-level regression coverage around the already-validated WTM 4.3 distance engine using only fictional deviated wells. It checks:
+
+- point-centered Radius Search in 2D and 3D
+- same-elevation 2D behavior
+- 3D in-radius intervals
+- 1-ftMD Well-to-Well sampling
+- blank 2D samples when the offset trajectory does not intersect the reference elevation
+- exact 3D closest approach
+- Offset Search corridor intervals and re-entry-capable interval logic
+- Point Search selected-well profiles
+- pair-table sorting with blank values retained at the bottom
+
+Selected reference values:
+
+```text
+Radius 2D nearest       10.212 m
+Radius 3D nearest       10.187 m
+Exact well↔well 3D      10.158905133826751 m
+Closest reference MD    175.8861473694053 m
+Closest offset MD       152.80595509137572 m
+Pair profile rows       1,150
+2D blank samples        66
+Offset corridor         0–309.2 mMD / 0–1,014.5 ftMD
+Selected profile rows   2,398
+```
+
+The exact closest-approach value is the same frozen benchmark already validated against original WTM 4.3 in Phase 1. The Phase 5 pure TypeScript workflow harness passed.
+
+## Phase 6 Trajectory Studio benchmark
+
+Phase 6 adds regression coverage for the pure Studio data transformations and engineering measurement logic while retaining the original dependency-free Canvas renderers. It checks:
+
+- WTM 4.3 deterministic well-colour hashing/palette
+- absolute X/Y reconstruction from origin-relative render buffers
+- DLS diagnostic scaling (`°/30m` and `°/100ft`)
+- station measurement 3D/horizontal/vertical components
+- clockwise-from-North bearing convention
+- absolute ΔMD
+- 0–360° normalization
+
+Selected fictional reference values:
+
+```text
+DEMO-01 colour          #84cc16
+DEMO-02 colour          #e879f9
+DLS 100-ft factor       1.016
+Measurement horizontal  50.000000000000 m
+Measurement vertical    12.000000000000 m
+Measurement 3D          51.419840528730 m
+Measurement bearing     36.869897645844°
+Measurement ΔMD         60.000000000000 m
+```
+
+The standalone pure-TypeScript Phase 6 helper harness passed. Visual Canvas behavior was migrated directly from the WTM 4.3 custom 2D/3D renderers; a real Vite/browser production build remains to be executed on a machine with npm registry access.
+

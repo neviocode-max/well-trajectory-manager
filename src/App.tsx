@@ -3,21 +3,14 @@ import { DatabaseProvider, useDatabase, useDatabaseSnapshot } from './app/Databa
 import { NAV_MODULES, type ModuleId } from './app/navigation';
 import { Dashboard } from './pages/Dashboard';
 import { DatabaseManager } from './pages/DatabaseManager';
+import { TrajectoryConverter } from './pages/TrajectoryConverter';
+import { TrajectorySplitter } from './pages/TrajectorySplitter';
+import { CoordinateConverter } from './pages/CoordinateConverter';
+import { WellDistance, type ClosestApproachHandoff } from './pages/WellDistance';
+import { TrajectoryStudio } from './pages/TrajectoryStudio';
+import type { ConverterFocusRequest, StudioFocusRequest } from './types/studio';
 import { preferences, type Theme } from './services/preferences';
 import logoUrl from './assets/wtm-logo.png';
-
-function Placeholder({ title, phase }: { title: string; phase: string }) {
-  return (
-    <div className="content">
-      <section className="card placeholder-card">
-        <div className="placeholder-icon">⌁</div>
-        <h3>{title}</h3>
-        <p>This module has not been migrated yet. Its WTM 4.3 implementation remains the source of truth.</p>
-        <span className="migration-badge">Scheduled for {phase}</span>
-      </section>
-    </div>
-  );
-}
 
 function WtmShell() {
   const database = useDatabase();
@@ -25,6 +18,9 @@ function WtmShell() {
   const [moduleId, setModuleId] = useState<ModuleId>('dashboard');
   const [theme, setTheme] = useState<Theme>(() => preferences.getTheme());
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [studioHandoff, setStudioHandoff] = useState<ClosestApproachHandoff | null>(null);
+  const [studioFocus, setStudioFocus] = useState<StudioFocusRequest | null>(null);
+  const [converterFocus, setConverterFocus] = useState<ConverterFocusRequest | null>(null);
 
   const module = useMemo(() => NAV_MODULES.find(item => item.id === moduleId) ?? NAV_MODULES[0], [moduleId]);
   const stats = database.stats();
@@ -39,15 +35,33 @@ function WtmShell() {
     setMobileNavOpen(false);
   };
 
+  const openStudio = (request: StudioFocusRequest) => {
+    setStudioHandoff(null);
+    setStudioFocus(request);
+    setModuleId('studio');
+  };
+
+  const openConverter = (request: ConverterFocusRequest) => {
+    setConverterFocus(request);
+    setModuleId('calculator');
+  };
+
   const content = (() => {
     switch (moduleId) {
       case 'dashboard': return <Dashboard />;
-      case 'database': return <DatabaseManager />;
-      case 'calculator': return <Placeholder title="Trajectory Converter" phase="Phase 4" />;
-      case 'splitter': return <Placeholder title="Trajectory Splitter" phase="Phase 4" />;
-      case 'coordinate': return <Placeholder title="Coordinate Converter" phase="Phase 4" />;
-      case 'distance': return <Placeholder title="Well Distance" phase="Phase 5" />;
-      case 'studio': return <Placeholder title="Trajectory Studio" phase="Phase 6" />;
+      case 'database': return <DatabaseManager onPlotWell={well => openStudio({ well, token: Date.now() })} />;
+      case 'calculator': return <TrajectoryConverter focusRequest={converterFocus} onFocusConsumed={() => setConverterFocus(null)} onShowInStudio={openStudio} />;
+      case 'splitter': return <TrajectorySplitter />;
+      case 'coordinate': return <CoordinateConverter />;
+      case 'distance': return <WellDistance onShowClosestApproach={handoff => { setStudioFocus(null); setStudioHandoff(handoff); setModuleId('studio'); }} />;
+      case 'studio': return <TrajectoryStudio
+        handoff={studioHandoff}
+        focusRequest={studioFocus}
+        themeKey={theme}
+        onHandoffConsumed={() => setStudioHandoff(null)}
+        onFocusConsumed={() => setStudioFocus(null)}
+        onShowInConverter={openConverter}
+      />;
       default: return null;
     }
   })();
@@ -97,7 +111,7 @@ function WtmShell() {
 
       {mobileNavOpen ? <button type="button" aria-label="Close navigation" className="mobile-scrim" onClick={() => setMobileNavOpen(false)} /> : null}
 
-      <main className="main">
+      <main className={`main ${moduleId === 'studio' ? 'studio-main-shell' : ''}`}>
         <header className="topbar">
           <button type="button" className="mobile-menu" onClick={() => setMobileNavOpen(!mobileNavOpen)}>☰</button>
           <div>
@@ -105,7 +119,7 @@ function WtmShell() {
             <p>{module.subtitle}</p>
           </div>
           <div className="spacer" />
-          <span className="phase-badge">Migration Phase 3</span>
+          <span className="phase-badge">Migration Phase 6</span>
         </header>
         {content}
       </main>

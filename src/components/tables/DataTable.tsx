@@ -8,10 +8,23 @@ const HEADER_LABELS: Record<string, string> = {
   Z: 'Z / Elevation (mASL)',
   Azimuth: 'Azimuth (°)',
   Inclination: 'Inclination (°)',
+  mMD: 'mMD',
+  ftMD: 'ftMD',
+  mTVD: 'mTVD',
+  ftTVD: 'ftTVD',
+  mASL: 'mASL',
+  ftASL: 'ftASL',
+  Type: 'Type',
   Residual: 'Residual (m)',
   Tolerance: 'Tolerance (m)',
   'MD From': 'MD From (m)',
   'MD To': 'MD To (m)',
+  'Distance (meter)': 'Distance (m)',
+  'Minimum Distance (meter)': 'Minimum Distance (m)',
+  'Horizontal (meter)': 'Horizontal (m)',
+  'Vertical (meter)': 'Vertical (m)',
+  'Closest X': 'Closest X (m)',
+  'Closest Y': 'Closest Y (m)',
 };
 
 export function displayHeader(key: string): string {

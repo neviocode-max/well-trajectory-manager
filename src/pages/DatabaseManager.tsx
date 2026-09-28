@@ -42,7 +42,7 @@ function resultMessage(prefix: string, quality: string): string {
   return quality ? `${prefix} · ${quality}.` : prefix;
 }
 
-export function DatabaseManager() {
+export function DatabaseManager({ onPlotWell }: { onPlotWell?: (well: string) => void }) {
   const database = useDatabase();
   const snapshot = useDatabaseSnapshot();
   const stats = database.stats();
@@ -286,7 +286,7 @@ export function DatabaseManager() {
                       <td className="num">{fmt(record.mdMax * 3.280839895013123, 2)}</td>
                       <td className="num">{fmt(record.tvdMax, 2)}</td>
                       <td className="actions-cell">
-                        <button type="button" className="ghost btn-xs" disabled title="Trajectory Studio migrates in Phase 6">Plot</button>
+                        <button type="button" className="ghost btn-xs" disabled={!onPlotWell} title="Open this trajectory in Studio" onClick={() => onPlotWell?.(name)}>Plot</button>
                         <button type="button" className="ghost btn-xs" onClick={() => exportWell(name)}>Export</button>
                         <button type="button" className="ghost btn-xs" onClick={() => setEditRecord(record)}>Edit Data</button>
                         <button type="button" className="ghost btn-xs danger" onClick={() => deleteWell(name)}>Delete</button>

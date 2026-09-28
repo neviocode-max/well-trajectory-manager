@@ -80,7 +80,7 @@ export function Dashboard() {
 
       <section className="card phase-note">
         <h3>WTM 1.0 Migration Status</h3>
-        <p className="hint">Phase 1 engineering engine and Phase 2 data layer are active. Dashboard/Data Viewer and Database Manager are the first migrated React pages in Phase 3.</p>
+        <p className="hint">Phases 1–4 are active: engineering engine, data/QC layer, React shell/data pages, Trajectory Converter, Trajectory Splitter and Coordinate Converter.</p>
       </section>
     </div>
   );

@@ -1,6 +1,18 @@
 import { rowsToTSV, toCSV } from './delimited';
 import { wtmFilename } from '../utils/format';
 
+
+export function downloadBlob(filename: string, blob: Blob): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
 export function downloadText(filename: string, data: string, mime = 'text/csv'): void {
   const blob = new Blob([data], { type: `${mime};charset=utf-8` });
   const url = URL.createObjectURL(blob);
