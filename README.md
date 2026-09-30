@@ -1,89 +1,90 @@
-# WTM 1.0 — Controlled React/TypeScript Migration
+# WTM 1.0 — Windows Azure App Service deployment
 
-This repository is the staged migration of **WTM 4.3 Stable** from a single self-contained HTML/CSS/vanilla-JavaScript application to:
+WTM is a React/Vite client application served by a very small dependency-free Node.js host (`server.cjs`). The engineering calculations remain in the browser. The production host exists to make deployment to Windows Azure App Service predictable and to provide a future authentication/runtime-config boundary.
 
-- React
-- Vite
-- TypeScript
-- Node.js toolchain
-- Windows Azure App Service compatible target
-- future Microsoft Entra ID integration boundary
+## Production topology
 
-WTM 4.3 remains the source of truth for behavior and engineering results.
+```text
+Browser
+  ↓ HTTPS
+Azure App Service (Windows)
+  ↓ serves dist/
+WTM React application
 
-## Current status
+Future authentication:
+Browser → App Service Authentication / Microsoft Entra ID → WTM
+```
 
-**Phase 1 + Phase 2 + Phase 3 + Phase 4 + Phase 5 + Phase 6 completed.**
+The production package contains **no real well database**. WTM starts empty and users import an approved local file.
 
-- Phase 1: engineering calculation engine
-- Phase 2: database / import / export / QC layer
-- Phase 3: React shell, Dashboard, Data Viewer and Database Manager
-- Phase 4: Trajectory Converter, Trajectory Splitter and Coordinate Converter
-- Phase 5: Well Distance — Radius Search, Well-to-Well, Offset Search and Point Search
-- Phase 6: Trajectory Studio — 3D, Plan, Section, Diagnostic, inspector, measurement and closest-approach handoff
-
-The application intentionally starts with an **empty database**. No real company data is embedded or committed.
-
-All major WTM 4.3 engineering workspaces are now migrated. Phase 7 is the full regression/responsiveness pass before production/Azure preparation.
-
-## Run locally
+## 1. Validate locally
 
 ```bash
 npm install
-npm run dev
+npm run check
+npm run start
 ```
 
-Validation / production build:
+Open `http://localhost:8080` after the build. `GET /healthz` should return HTTP 200.
+
+> After the first successful `npm install`, commit the generated `package-lock.json` to the private repository and use `npm ci` in CI/CD.
+
+## 2. Prepare a deployment folder
 
 ```bash
-npm run test
-npm run build
+npm run package:azure
 ```
 
-## Supported trajectory imports
+This creates `azure-package/` containing only:
 
-Full trajectory files may use CSV, TSV, semicolon-delimited or TXT text and require equivalent fields for:
+- `dist/`
+- `server.cjs`
+- `web.config`
+- a minimal production `package.json`
+- `DEPLOYMENT.txt`
 
-- Well
-- MD
-- X / Easting
-- Y / Northing
-- Z / Elevation
-- TVD
+Zip the **contents** of `azure-package/` and deploy that ZIP to the Windows App Service. No npm packages are required at runtime because React is already bundled and the Node host uses only Node built-ins.
 
-Azimuth and Inclination are optional for a full trajectory and are derived using WTM 4.3 behavior when absent.
+## 3. App Service settings
 
-Directional-survey files may contain:
-
-- Well (optional for a one-well file; supported for multi-well files)
-- MD
-- Azimuth / AZI
-- Inclination / INC
-
-WTM requests an exact survey-station tie-in with X, Y, Z and TVD, then reconstructs the trajectory using minimum curvature.
-
-## Source structure
+Recommended application settings:
 
 ```text
-src/
-├── app/            React app state / navigation
-├── components/     common, database, table and Canvas plot components
-├── data/           typed in-memory database + normalization
-├── engine/         Phase 1 deterministic engineering engine
-├── pages/          migrated pages
-├── services/       import/export, trajectory tools, distance workflows, clipboard/files, preferences
-├── styles/         WTM UI tokens/layout
-├── tests/          parity/regression tests
-├── types/          survey/database/well types
-└── utils/
+NODE_ENV=production
+WTM_ENVIRONMENT=production
+WTM_VERSION=1.0.0
+WTM_AUTH_MODE=off
 ```
 
-## Fictional test data
+Choose a Node.js version compatible with the repository `engines` field. The Node host listens on the port supplied by App Service through `PORT`.
 
-`demo/` contains fictional `DEMO-*` files for local testing only. They are not loaded automatically. `DEMO_distance.csv` contains three fictional deviated wells intended for Well Distance testing.
+The included `web.config` routes Windows App Service requests through `server.cjs`. The Node host serves Vite's `dist/`, supplies security headers, long-cache headers for hashed assets, a SPA fallback, `/healthz`, and `/api/runtime-config`.
 
-## Important data/security rule
+## 4. Microsoft Entra ID — prepared, not enabled by this repository
 
-This repository must never contain real company well names, coordinates, trajectories, reservoir information, production information, or other confidential engineering data.
+WTM does **not** contain a username/password system and does not perform its own OAuth flow.
 
-See `MIGRATION_ASSESSMENT.md`, `PHASE_2_3_REPORT.md`, `PHASE_4_REPORT.md`, `PHASE_5_REPORT.md`, and `PHASE_6_REPORT.md` for architecture, risk and validation detail.
+When IT is ready:
+
+1. In the App Service, open **Settings → Authentication**.
+2. Add **Microsoft** as the identity provider.
+3. Restrict access according to company policy (for an internal app, commonly require authentication and the company tenant).
+4. Set App Service application setting:
+
+```text
+WTM_AUTH_MODE=appservice
+```
+
+The frontend will then read identity from the App Service built-in `/.auth/me` endpoint. WTM intentionally keeps only non-token identity information (name/id/claims) and does not store provider access or refresh tokens.
+
+Microsoft documentation:
+
+- App Service Node.js quickstart: https://learn.microsoft.com/azure/app-service/quickstart-nodejs
+- App Service authentication with Microsoft Entra ID: https://learn.microsoft.com/entra/identity-platform/multi-service-web-app-authentication-app-service
+- App Service OAuth token / `/.auth/me` endpoint: https://learn.microsoft.com/azure/app-service/configure-authentication-oauth-tokens
+
+## 5. Later cloud-database architecture
+
+Do **not** add storage keys or SAS tokens to the React bundle. If WTM later lists company databases from Azure Storage, use a server API + App Service Managed Identity/RBAC so credentials never enter browser source code.
+
+That future data layer is intentionally outside WTM 1.0 Empty Database.
