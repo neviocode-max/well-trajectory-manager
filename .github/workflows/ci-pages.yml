@@ -39,8 +39,17 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build production app
-        run: npm run build
+      - name: Build production app for GitHub Pages
+        run: npm run build -- --base=/${{ github.event.repository.name }}/
+
+      - name: Verify Pages artifact
+        run: |
+          test -f dist/index.html
+          grep -q "/${{ github.event.repository.name }}/assets/" dist/index.html
+          if grep -q "/src/main.tsx" dist/index.html; then
+            echo "Pages artifact still references Vite source files instead of the production build."
+            exit 1
+          fi
 
       - name: Upload GitHub Pages artifact
         if: github.event_name != 'pull_request'
