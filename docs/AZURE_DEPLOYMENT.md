@@ -60,7 +60,54 @@ Choose a Node.js version compatible with the repository `engines` field. The Nod
 
 The included `web.config` routes Windows App Service requests through `server.cjs`. The Node host serves Vite's `dist/`, supplies security headers, long-cache headers for hashed assets, a SPA fallback, `/healthz`, and `/api/runtime-config`.
 
-## 4. Microsoft Entra ID — prepared, not enabled by this repository
+## 4. GitHub Actions → Azure App Service
+
+The repository includes `.github/workflows/azure-app-service.yml`.
+
+It is intentionally dormant until Azure is ready. The deployment job runs only when this repository variable is set:
+
+```text
+AZURE_DEPLOY_ENABLED=true
+```
+
+Required repository variable:
+
+```text
+AZURE_WEBAPP_NAME=<your App Service name>
+```
+
+Required GitHub Actions secrets for OpenID Connect (OIDC):
+
+```text
+AZURE_CLIENT_ID=<Azure application or managed identity client ID>
+AZURE_TENANT_ID=<Microsoft Entra tenant ID>
+AZURE_SUBSCRIPTION_ID=<Azure subscription ID>
+```
+
+Ask the Azure/IT administrator to create the federated identity credential for this GitHub repository/environment and grant the identity permission to deploy to the target App Service. No Azure client secret or App Service publish profile is stored in GitHub.
+
+After `AZURE_DEPLOY_ENABLED=true` is configured, the workflow will:
+
+1. Wait for **CI and GitHub Pages** to finish successfully on `main`.
+2. Check out the exact validated commit.
+3. Run TypeScript checks and Vitest regression tests again.
+4. Run `npm run package:azure`.
+5. Sign in to Azure with `azure/login@v2` using OIDC.
+6. Deploy `azure-package/` with `azure/webapps-deploy@v3`.
+
+It can also be started manually from **GitHub → Actions → Azure App Service → Run workflow**.
+
+The workflow uses the GitHub environment:
+
+```text
+azure-production
+```
+
+Company administrators can optionally add deployment approvals/protection rules to that environment.
+
+Microsoft reference: https://learn.microsoft.com/azure/app-service/deploy-github-actions
+
+## 5. Microsoft Entra ID — prepared, not enabled by this repository
 
 WTM does **not** contain a username/password system and does not perform its own OAuth flow.
 
@@ -83,7 +130,7 @@ Microsoft documentation:
 - App Service authentication with Microsoft Entra ID: https://learn.microsoft.com/entra/identity-platform/multi-service-web-app-authentication-app-service
 - App Service OAuth token / `/.auth/me` endpoint: https://learn.microsoft.com/azure/app-service/configure-authentication-oauth-tokens
 
-## 5. Later cloud-database architecture
+## 6. Later cloud-database architecture
 
 Do **not** add storage keys or SAS tokens to the React bundle. If WTM later lists company databases from Azure Storage, use a server API + App Service Managed Identity/RBAC so credentials never enter browser source code.
 
