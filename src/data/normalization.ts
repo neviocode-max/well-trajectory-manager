@@ -42,7 +42,7 @@ function inclination(row: RawRow): number | null {
 }
 
 function metadata(row: RawRow) {
-  return { SURV_Type: pick(row, ['SURV_Type']) ?? '', BHT: pick(row, ['BHT']) ?? '' };
+  return { SURV_Type: pick(row, ['SURV_Type']) ?? '', BHT: pick(row, ['BHT']) ?? '', NOTES: pick(row, ['NOTES']) ?? '' };
 }
 
 function feetOrMeters(row: RawRow, feetName: string, meterNames: readonly string[]): number | null {
@@ -90,7 +90,7 @@ export function normalizeFullTrajectory(rawRows: RawRow[]): ParsedFullTrajectory
 }
 
 export function parseDirectionalSurvey(rawRows: RawRow[]): ParsedDirectionalSurvey | null {
-  const parsed: Array<{ Well: string; MD: number; Azimuth: number; Inclination: number; SURV_Type: string; BHT: string }> = [];
+  const parsed: Array<{ Well: string; MD: number; Azimuth: number; Inclination: number; SURV_Type: string; BHT: string; NOTES: string }> = [];
   let dropped = 0;
   let hasNamed = false;
 
@@ -134,7 +134,7 @@ export function parseDirectionalSurvey(rawRows: RawRow[]): ParsedDirectionalSurv
         group.duplicates++;
         continue;
       }
-      clean.push({ MD: row.MD, Azimuth: row.Azimuth, Inclination: row.Inclination, SURV_Type: row.SURV_Type, BHT: row.BHT });
+      clean.push({ MD: row.MD, Azimuth: row.Azimuth, Inclination: row.Inclination, SURV_Type: row.SURV_Type, BHT: row.BHT, NOTES: row.NOTES });
     }
     if (clean.length) {
       output.push({

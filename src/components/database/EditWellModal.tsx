@@ -15,7 +15,7 @@ interface Props {
   onSave: (oldName: string, newName: string, rows: EditableSurveyRow[]) => void;
 }
 
-const FIELDS: Array<keyof EditableSurveyRow> = ['MD', 'X', 'Y', 'Z', 'TVD', 'Azimuth', 'Inclination'];
+const FIELDS: Array<keyof EditableSurveyRow> = ['MD', 'X', 'Y', 'Z', 'TVD', 'Azimuth', 'Inclination', 'NOTES'];
 
 export function EditWellModal({ record, onClose, onSave }: Props) {
   const [name, setName] = useState('');
@@ -35,6 +35,7 @@ export function EditWellModal({ record, onClose, onSave }: Props) {
       Inclination: raw(station.Inclination),
       SURV_Type: station.SURV_Type,
       BHT: station.BHT,
+      NOTES: station.NOTES,
       selected: false,
     })));
     setMessage(null);
@@ -102,7 +103,7 @@ export function EditWellModal({ record, onClose, onSave }: Props) {
                   <td key={field}>
                     <input
                       type="text"
-                      inputMode="decimal"
+                      inputMode={field === 'NOTES' ? 'text' : 'decimal'}
                       value={String(row[field] ?? '')}
                       onChange={event => updateCell(rowIndex, field, event.target.value)}
                     />

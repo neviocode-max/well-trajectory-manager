@@ -1,6 +1,7 @@
 export interface SurveyMetadata {
   SURV_Type?: string;
   BHT?: string;
+  NOTES?: string;
 }
 
 export interface SurveyStation extends SurveyMetadata {

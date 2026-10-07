@@ -368,6 +368,7 @@ export class WellDatabase {
       Inclination: normalizeNumeric(row.Inclination, `Row ${i + 1} Inclination`, true),
       SURV_Type: row.SURV_Type,
       BHT: row.BHT,
+      NOTES: row.NOTES,
     }));
 
     rows.sort((a, b) => a.MD - b.MD);

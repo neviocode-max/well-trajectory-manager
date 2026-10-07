@@ -9,8 +9,8 @@ import { parseTrajectoryFile } from '../services/importExport';
 import { calculateConverterRow, converterInputRows, roundedConversion } from '../services/trajectoryTools';
 
 const sample = [
-  ['MBA-1', '0', '0', '0', '0', '90', '', '', '791062', '9206713', '0', '6415.715'],
-  ['MBA-1', '31.20079', '9.51', '0', '0', '90', '', '', '791062', '9206713', '31.20079', '6384.514'],
+  ['MBA-1', '0', '0', '0', '0', '90', '', '', '791062', '9206713', '0', '6415.715', 'RKB'],
+  ['MBA-1', '31.20079', '9.51', '0', '0', '90', '', '', '791062', '9206713', '31.20079', '6384.514', ''],
 ];
 const text = (separator = ',') => [SURVEY_TEMPLATE_KEYS, ...sample].map(row => row.join(separator)).join('\n');
 
@@ -21,7 +21,8 @@ describe('default survey template', () => {
     if (result.parsed.kind !== 'full') throw new Error('Expected full trajectory');
     expect(result.parsed.dropped).toBe(0);
     expect(result.parsed.stations).toHaveLength(2);
-    expect(result.parsed.stations[1]).toMatchObject({ Well: 'MBA-1', MD: 9.51, X: 791062, Y: 9206713, Inclination: 0, Azimuth: 0, SURV_Type: '', BHT: '' });
+    expect(result.parsed.stations[0].NOTES).toBe('RKB');
+    expect(result.parsed.stations[1]).toMatchObject({ Well: 'MBA-1', MD: 9.51, X: 791062, Y: 9206713, Inclination: 0, Azimuth: 0, SURV_Type: '', BHT: '', NOTES: '' });
     expect(result.parsed.stations[1].TVD).toBeCloseTo(31.20079 / FT, 10);
     expect(result.parsed.stations[1].Z).toBeCloseTo(6384.514 / FT, 10);
   });
@@ -33,8 +34,10 @@ describe('default survey template', () => {
     const csv = toCSV(db.toRows(), SURVEY_TEMPLATE_KEYS);
     expect(csv.split('\n')[0]).toBe(SURVEY_TEMPLATE_KEYS.join(','));
     expect(Object.keys(db.wellRows('MBA-1')[0])).toEqual(SURVEY_TEMPLATE_KEYS);
-    expect(db.toRows()[1]).toMatchObject({ DEPTH_m: 9.51, DIP: 90, SURV_Type: '', BHT: '' });
+    expect(db.toRows()[0].NOTES).toBe('RKB');
+    expect(db.toRows()[1]).toMatchObject({ DEPTH_m: 9.51, DIP: 90, SURV_Type: '', BHT: '', NOTES: '' });
     const restored = normalizeFullTrajectory(parseDelimited(csv));
+    expect(restored.stations.map(row => row.NOTES)).toEqual(['RKB', '']);
     for (let i = 0; i < input.stations.length; i++) {
       for (const key of ['MD', 'X', 'Y', 'Z', 'TVD'] as const) {
         expect(restored.stations[i][key]).toBeCloseTo(input.stations[i][key], 10);
@@ -46,6 +49,7 @@ describe('default survey template', () => {
     const raw = parseDelimited(text());
     raw[0].SURV_Type = 'Gyro, final';
     raw[0].BHT = '215.0';
+    raw[0].NOTES = 'RKB, \"reference\"\nFinal survey';
     const stations = normalizeFullTrajectory(raw).stations;
     const db = new WellDatabase();
     db.replace(stations, 'survey.csv');
@@ -54,8 +58,16 @@ describe('default survey template', () => {
     db.updateWell(record.name, 'Renamed', record.rows);
     const csv = toCSV(db.wellRows('Renamed'), SURVEY_TEMPLATE_KEYS);
     const restored = normalizeFullTrajectory(parseDelimited(csv));
-    expect(restored.stations[0]).toMatchObject({ Well: 'Renamed', SURV_Type: 'Gyro, final', BHT: '215.0' });
-    expect(restored.stations[1]).toMatchObject({ SURV_Type: '', BHT: '' });
+    expect(restored.stations[0]).toMatchObject({ Well: 'Renamed', SURV_Type: 'Gyro, final', BHT: '215.0', NOTES: raw[0].NOTES });
+    expect(restored.stations[1]).toMatchObject({ SURV_Type: '', BHT: '', NOTES: '' });
+  });
+
+  it('accepts earlier files without a NOTES column and exports blank notes', () => {
+    const raw = parseDelimited(text());
+    for (const row of raw) delete row.NOTES;
+    const db = new WellDatabase();
+    db.replace(normalizeFullTrajectory(raw).stations, 'older-survey.csv');
+    expect(db.toRows().map(row => row.NOTES)).toEqual(['', '']);
   });
 
   it('accepts feet-only MD, DIP-only inclination, and mixed-case headers', () => {
@@ -67,6 +79,7 @@ describe('default survey template', () => {
     const result = normalizeFullTrajectory(mixedCase);
     expect(result.stations[1].MD).toBeCloseTo(31.20079 / FT, 10);
     expect(result.stations[1].Inclination).toBe(25);
+    expect(result.stations[0].NOTES).toBe('RKB');
   });
 
   it('rejects contradictory or invalid DIP values', () => {
@@ -78,11 +91,11 @@ describe('default survey template', () => {
   });
 
   it('supports directional template imports and retains metadata during reconstruction', () => {
-    const raw = parseDelimited('WELL_NAME,DEPTH_ft,AZIMUTH,DIP,SURV_Type,BHT\nDEMO,0,0,90,Gyro,210\nDEMO,100,45,70,MWD,220');
+    const raw = parseDelimited('WELL_NAME,DEPTH_ft,AZIMUTH,DIP,SURV_Type,BHT,NOTES\nDEMO,0,0,90,Gyro,210,RKB\nDEMO,100,45,70,MWD,220,Survey station');
     const parsed = parseDirectionalSurvey(raw)!;
     expect(parsed.groups[0].rows[1].MD).toBeCloseTo(100 / FT, 10);
     const rows = reconstructDirectionalSurvey(parsed.groups[0].rows, { well: 'DEMO', MD: 0, X: 1, Y: 2, Z: 1000, TVD: 0 });
-    expect(rows[1]).toMatchObject({ Inclination: 20, SURV_Type: 'MWD', BHT: '220' });
+    expect(rows[1]).toMatchObject({ Inclination: 20, SURV_Type: 'MWD', BHT: '220', NOTES: 'Survey station' });
   });
 
   it('accepts the same template in the converter and calculates DIP at interpolated depths', () => {

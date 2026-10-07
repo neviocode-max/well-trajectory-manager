@@ -5,7 +5,7 @@ import type { RawRow } from '../services/delimited';
 /** Shared column order for database files and the Data Viewer. */
 export const SURVEY_TEMPLATE_KEYS = [
   'WELL_NAME', 'DEPTH_ft', 'DEPTH_m', 'DEV_ANGLE', 'AZIMUTH', 'DIP',
-  'SURV_Type', 'BHT', 'UTM_E', 'UTM_N', 'DEPTH_VERT', 'ELEV_FT',
+  'SURV_Type', 'BHT', 'UTM_E', 'UTM_N', 'DEPTH_VERT', 'ELEV_FT', 'NOTES',
 ];
 
 export function pickSurveyValue(row: RawRow, names: readonly string[]): string | null {
@@ -31,5 +31,6 @@ export function surveyTemplateRow(station: SurveyStation): Record<string, string
     UTM_N: station.Y,
     DEPTH_VERT: station.TVD * FT,
     ELEV_FT: station.Z * FT,
+    NOTES: station.NOTES ?? '',
   };
 }

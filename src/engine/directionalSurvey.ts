@@ -32,6 +32,7 @@ export function reconstructDirectionalSurvey(
     Inclination: r.Inclination,
     SURV_Type: r.SURV_Type,
     BHT: r.BHT,
+    NOTES: r.NOTES,
   }));
 
   rows[idx].X = vals[0];
