@@ -1,8 +1,9 @@
+import { SURVEY_TEMPLATE_KEYS } from '../data/surveyTemplate';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDatabase, useDatabaseSnapshot } from '../app/DatabaseContext';
 import { qualityText } from '../data/database';
 import { asSurveyInput, parseTrajectoryFile } from '../services/importExport';
-import { exportRows } from '../services/browserFiles';
+import { downloadText, exportRows } from '../services/browserFiles';
 import { preferences } from '../services/preferences';
 import type {
   AppendMode,
@@ -20,7 +21,7 @@ import { DuplicateWellModal } from '../components/database/DuplicateWellModal';
 import { EditWellModal } from '../components/database/EditWellModal';
 import { fmt } from '../utils/format';
 
-const SURVEY_KEYS = ['Well', 'MD', 'X', 'Y', 'Z', 'TVD', 'Azimuth', 'Inclination'];
+const SURVEY_KEYS = SURVEY_TEMPLATE_KEYS;
 type ImportAction = 'load' | 'append';
 type QCFilter = 'all' | 'conflict' | 'geometry';
 
@@ -167,8 +168,10 @@ export function DatabaseManager({ onPlotWell }: { onPlotWell?: (well: string) =>
     <div className="content">
       <section className="card">
         <h3>Database</h3>
-        <p className="hint">Load or append approved trajectory data for the current session.</p>
+        <p className="hint">Load or append trajectory data using the default survey template. UTM_E / UTM_N are metres; DEPTH_VERT and ELEV_FT are feet. DIP = 90 − DEV_ANGLE.</p>
+        <p className="hint">{SURVEY_KEYS.join(" · ")}</p>
         <div className="row db-actions">
+          <button type="button" onClick={() => downloadText("WTM_Database_Template.csv", SURVEY_KEYS.join(",") + "\n")}>Download Template</button>
           <button type="button" className="primary" onClick={() => loadRef.current?.click()}>Load Database</button>
           <button type="button" onClick={() => appendRef.current?.click()}>Append Database</button>
           <button type="button" onClick={() => {

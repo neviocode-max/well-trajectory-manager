@@ -1,3 +1,4 @@
+import { SURVEY_TEMPLATE_KEYS } from '../data/surveyTemplate';
 import { useEffect, useMemo, useState } from 'react';
 import { useDatabase, useDatabaseSnapshot } from '../app/DatabaseContext';
 import { copyRows, exportRows } from '../services/browserFiles';
@@ -7,7 +8,7 @@ import { EmptyState } from '../components/common/EmptyState';
 import { Message, type MessageState } from '../components/common/Message';
 import { fmt } from '../utils/format';
 
-const SURVEY_KEYS = ['Well', 'MD', 'X', 'Y', 'Z', 'TVD', 'Azimuth', 'Inclination'];
+const SURVEY_KEYS = SURVEY_TEMPLATE_KEYS;
 
 export function Dashboard() {
   const database = useDatabase();
@@ -56,7 +57,7 @@ export function Dashboard() {
 
       <section className="card">
         <h3>Data Viewer</h3>
-        <p className="hint">Inspect the currently loaded trajectory database without modifying it.</p>
+        <p className="hint">Inspect the loaded survey in the default database template. UTM coordinates are metres; DEPTH_VERT and ELEV_FT are feet.</p>
         {!snapshot.names.length ? (
           <EmptyState>The database is empty. Open Database Manager to load a CSV, TSV, or TXT trajectory file.</EmptyState>
         ) : (

@@ -1,4 +1,4 @@
-import type { DirectionalSurveyStation, SurveyStation } from './survey';
+import type { DirectionalSurveyStation, SurveyStation, SurveyMetadata } from './survey';
 
 export interface QCIssue {
   Type: 'Conflicting duplicate MD' | 'Geometry closure' | string;
@@ -78,7 +78,7 @@ export type ParsedTrajectoryInput = ParsedFullTrajectory | ParsedDirectionalSurv
  * Import-time station. WTM 4.3 allows Inclination/Azimuth to be absent for a
  * full XYZ/TVD survey and derives them during database finalisation.
  */
-export interface SurveyInputStation {
+export interface SurveyInputStation extends SurveyMetadata {
   Well: string;
   MD: number;
   X: number;
@@ -90,7 +90,7 @@ export interface SurveyInputStation {
   Derived?: boolean;
 }
 
-export interface EditableSurveyRow {
+export interface EditableSurveyRow extends SurveyMetadata {
   MD: string | number;
   X: string | number;
   Y: string | number;

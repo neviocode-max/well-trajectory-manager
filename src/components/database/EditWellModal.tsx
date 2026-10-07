@@ -33,6 +33,8 @@ export function EditWellModal({ record, onClose, onSave }: Props) {
       TVD: raw(station.TVD),
       Azimuth: raw(station.Azimuth),
       Inclination: raw(station.Inclination),
+      SURV_Type: station.SURV_Type,
+      BHT: station.BHT,
       selected: false,
     })));
     setMessage(null);

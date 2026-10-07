@@ -1,4 +1,9 @@
-export interface SurveyStation {
+export interface SurveyMetadata {
+  SURV_Type?: string;
+  BHT?: string;
+}
+
+export interface SurveyStation extends SurveyMetadata {
   Well: string;
   MD: number;
   X: number;
@@ -10,7 +15,7 @@ export interface SurveyStation {
   Derived?: boolean;
 }
 
-export interface DirectionalSurveyStation {
+export interface DirectionalSurveyStation extends SurveyMetadata {
   MD: number;
   Azimuth: number;
   Inclination: number;

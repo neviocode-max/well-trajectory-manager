@@ -3,20 +3,20 @@ import { useDatabase, useDatabaseSnapshot } from '../app/DatabaseContext';
 import { TYPES, type ConversionOutput, type TrajectoryInputType } from '../engine/trajectory';
 import { copyRows, copyText, exportRows } from '../services/browserFiles';
 import { parseDelimited } from '../services/delimited';
-import { calculateConverterRow, roundedConversion, type ConverterRowState } from '../services/trajectoryTools';
+import { calculateConverterRow, converterInputRows, roundedConversion, type ConverterRowState } from '../services/trajectoryTools';
 import { Message, type MessageState } from '../components/common/Message';
 import { raw } from '../utils/format';
 import { moveSpreadsheetFocus, parseSpreadsheetPaste } from '../utils/spreadsheet';
 import type { ConverterFocusRequest, StudioFocusRequest } from '../types/studio';
 
 const INPUT_TYPES = Object.keys(TYPES) as TrajectoryInputType[];
-const OUTPUT_COLUMNS: Array<keyof ConversionOutput> = ['mMD', 'ftMD', 'mTVD', 'ftTVD', 'mASL', 'ftASL', 'X', 'Y', 'Azimuth', 'Inclination'];
+const OUTPUT_COLUMNS: Array<keyof ConversionOutput> = ['mMD', 'ftMD', 'mTVD', 'ftTVD', 'mASL', 'ftASL', 'X', 'Y', 'Azimuth', 'Inclination', 'DIP'];
 const MIN_ROWS = 8;
 
 const HEADERS: Record<string, string> = {
   Well: 'Well', mMD: 'mMD', ftMD: 'ftMD', mTVD: 'mTVD', ftTVD: 'ftTVD',
   mASL: 'mASL', ftASL: 'ftASL', X: 'X / Easting (m)', Y: 'Y / Northing (m)',
-  Azimuth: 'Azimuth (°)', Inclination: 'Inclination (°)',
+  Azimuth: 'Azimuth (°)', Inclination: 'Inclination (°)', DIP: 'DIP (°)',
 };
 
 type FillRole = 'well' | 'input';
@@ -289,19 +289,12 @@ export function TrajectoryConverter({ onShowInStudio, focusRequest, onFocusConsu
       if (!snapshot.names.length) throw new Error('The database is empty. Load a database first.');
       const parsed = parseDelimited(await file.text());
       if (!parsed.length) throw new Error('The file is empty.');
-      const columns = Object.keys(parsed[0]);
-      const wellColumn = columns.find(column => column.toLowerCase() === 'well');
-      const type = INPUT_TYPES.find(candidate => columns.some(column => column.toLowerCase() === candidate.toLowerCase()));
-      if (!wellColumn || !type) throw new Error(`The file needs a Well column plus one of: ${INPUT_TYPES.join(', ')}.`);
-      const typeColumn = columns.find(column => column.toLowerCase() === type.toLowerCase())!;
+      const { type, rows: inputs } = converterInputRows(parsed);
       setInputType(type);
       setActiveRow(null);
       setFillSelection(null);
-      const next = parsed.map(row => calculateConverterRow(
-        database.get(String(row[wellColumn] || '').trim()),
-        String(row[wellColumn] || '').trim(),
-        type,
-        String(row[typeColumn] ?? '').trim(),
+      const next = inputs.map(row => calculateConverterRow(
+        database.get(row.well), row.well, type, row.input,
       ));
       setRows(ensureRows(next, Math.max(MIN_ROWS, next.length)));
       setMessage({ kind: 'ok', text: `Imported ${file.name} into the converter table.` });

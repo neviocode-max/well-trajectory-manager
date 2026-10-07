@@ -15,7 +15,8 @@ import type {
 } from '../types/database';
 import type { SurveyStation } from '../types/survey';
 import type { WellRecord } from '../types/well';
-import { fmt, raw } from '../utils/format';
+import { surveyTemplateRow } from './surveyTemplate';
+import { fmt } from '../utils/format';
 
 export type DatabaseListener = () => void;
 
@@ -365,6 +366,8 @@ export class WellDatabase {
       TVD: normalizeNumeric(row.TVD, `Row ${i + 1} TVD`, false) as number,
       Azimuth: normalizeNumeric(row.Azimuth, `Row ${i + 1} Azimuth`, true),
       Inclination: normalizeNumeric(row.Inclination, `Row ${i + 1} Inclination`, true),
+      SURV_Type: row.SURV_Type,
+      BHT: row.BHT,
     }));
 
     rows.sort((a, b) => a.MD - b.MD);
@@ -405,39 +408,12 @@ export class WellDatabase {
     return duplicates;
   }
 
-  toRows(): Array<Record<string, string>> {
-    const output: Array<Record<string, string>> = [];
-    for (const name of this.names) {
-      const record = this.get(name);
-      if (!record) continue;
-      for (const station of record.rows) {
-        output.push({
-          Well: station.Well,
-          MD: raw(station.MD),
-          X: raw(station.X),
-          Y: raw(station.Y),
-          Z: raw(station.Z),
-          TVD: raw(station.TVD),
-          Azimuth: raw(station.Azimuth),
-          Inclination: raw(station.Inclination),
-        });
-      }
-    }
-    return output;
+  toRows(): Array<Record<string, string | number>> {
+    return this.names.flatMap(name => this.wellRows(name));
   }
 
-  wellRows(name: string): Array<Record<string, string>> {
-    const record = this.require(name);
-    return record.rows.map(station => ({
-      Well: station.Well,
-      MD: raw(station.MD),
-      X: raw(station.X),
-      Y: raw(station.Y),
-      Z: raw(station.Z),
-      TVD: raw(station.TVD),
-      Azimuth: raw(station.Azimuth),
-      Inclination: raw(station.Inclination),
-    }));
+  wellRows(name: string): Array<Record<string, string | number>> {
+    return this.require(name).rows.map(surveyTemplateRow);
   }
 
   stats(): DatabaseStats {
