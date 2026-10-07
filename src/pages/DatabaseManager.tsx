@@ -19,6 +19,7 @@ import { DataTable } from '../components/tables/DataTable';
 import { DirectionalTieInModal } from '../components/database/DirectionalTieInModal';
 import { DuplicateWellModal } from '../components/database/DuplicateWellModal';
 import { EditWellModal } from '../components/database/EditWellModal';
+import { SavedDatabaseControls } from '../components/database/SavedDatabaseControls';
 import { fmt } from '../utils/format';
 
 const SURVEY_KEYS = SURVEY_TEMPLATE_KEYS;
@@ -221,16 +222,16 @@ export function DatabaseManager({ onPlotWell }: { onPlotWell?: (well: string) =>
         <div className="stat"><b>Rows Rejected</b><span>{fmt(report?.dropped ?? 0, 0)}</span><small>{fmt(report?.duplicates ?? 0, 0)} duplicate depth(s) removed</small></div>
       </div>
 
-      <section className="card">
-        <h3>Project Metadata</h3>
-        <p className="hint">Metadata belongs to the current in-memory database and is not yet persisted between sessions.</p>
+      <section className="card saved-database-card">
+        <SavedDatabaseControls project={project} crs={crs} />
+        <div className="saved-db-metadata-head"><h4>Project Metadata</h4><p className="hint">These details belong to the current working database.</p></div>
         <div className="grid metadata-grid">
-          <div className="field"><label>Project</label><input value={project} onChange={event => setProject(event.target.value)} placeholder="e.g. DEMO Project" /></div>
-          <div className="field"><label>Coordinate Reference System</label><input value={crs} onChange={event => setCrs(event.target.value)} placeholder="e.g. WGS84 / UTM Zone 48S" /></div>
+          <div className="field"><label htmlFor="database-project">Project</label><input id="database-project" value={project} onChange={event => setProject(event.target.value)} placeholder="e.g. DEMO Project" /></div>
+          <div className="field"><label htmlFor="database-crs">Coordinate Reference System</label><input id="database-crs" value={crs} onChange={event => setCrs(event.target.value)} placeholder="e.g. WGS84 / UTM Zone 48S" /></div>
           <button type="button" onClick={() => {
             database.setMeta(project, crs);
             setMessage({ kind: 'ok', text: 'Project metadata saved for the current in-memory database.' });
-          }}>Save Metadata</button>
+          }} title="Apply metadata to this browser session; cloud saving is not connected">Apply Metadata</button>
         </div>
       </section>
 

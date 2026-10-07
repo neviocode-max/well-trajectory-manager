@@ -132,6 +132,15 @@ Microsoft documentation:
 
 ## 6. Later cloud-database architecture
 
+Database Manager includes a **Saved Databases** UI design with a selector, save status, **Save Changes**, and a **Save As** naming preview. These are not connected to storage yet:
+
+- The selector shows the current working upload but cannot load cloud datasets.
+- **Save Changes** and **Save to Azure** are disabled.
+- **Save As** lets users preview the dataset name, project, CRS, and record counts; it saves no data or name.
+- **Apply Metadata** updates only the current browser session. CSV export remains the way to keep a copy before cloud saving is available.
+
+When storage is added, load the authorized dataset list into the selector and give each dataset a stable ID independent of its project name. Persist surveys and metadata together; track unsaved edits and handle them before switching datasets. Enable the save buttons only after server authentication, authorization, and storage are available.
+
 Do **not** add storage keys or SAS tokens to the React bundle. If WTM later lists company databases from Azure Storage, use a server API + App Service Managed Identity/RBAC so credentials never enter browser source code.
 
 That future data layer is intentionally outside WTM 1.0 Empty Database.
