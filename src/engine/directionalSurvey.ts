@@ -30,6 +30,8 @@ export function reconstructDirectionalSurvey(
     TVD: Number.NaN,
     Azimuth: r.Azimuth,
     Inclination: r.Inclination,
+    SURV_Type: r.SURV_Type,
+    BHT: r.BHT,
   }));
 
   rows[idx].X = vals[0];

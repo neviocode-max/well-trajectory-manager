@@ -217,6 +217,7 @@ export interface ConversionOutput {
   Y: number;
   Azimuth: number;
   Inclination: number;
+  DIP: number;
 }
 
 import { FT } from './constants';
@@ -234,6 +235,7 @@ export function outputRow(p: SurveyStation): ConversionOutput {
     Y: p.Y,
     Azimuth: p.Azimuth,
     Inclination: p.Inclination,
+    DIP: 90 - p.Inclination,
   };
 }
 

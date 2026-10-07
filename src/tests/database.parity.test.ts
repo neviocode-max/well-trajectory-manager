@@ -1,3 +1,4 @@
+import { SURVEY_TEMPLATE_KEYS } from '../data/surveyTemplate';
 import { describe, expect, it } from 'vitest';
 import { WellDatabase } from '../data/database';
 import { normalizeFullTrajectory, parseDirectionalSurvey } from '../data/normalization';
@@ -78,8 +79,8 @@ describe('WTM 4.3 database/import parity behavior', () => {
     const normalized = normalizeFullTrajectory(parseDelimited('Well,MD,X,Y,Z,TVD,Azimuth,Inclination\nDEMO-01,0,1,2,3,4,5,6'));
     const db = new WellDatabase();
     db.replace(normalized.stations, 'demo.csv', normalized.dropped);
-    const csv = toCSV(db.toRows(), ['Well', 'MD', 'X', 'Y', 'Z', 'TVD', 'Azimuth', 'Inclination']);
-    expect(csv.split('\n')[0]).toBe('Well,MD,X,Y,Z,TVD,Azimuth,Inclination');
-    expect(csv).toContain('DEMO-01,0,1,2,3,4,5,6');
+    const csv = toCSV(db.toRows(), SURVEY_TEMPLATE_KEYS);
+    expect(csv.split('\n')[0]).toBe(SURVEY_TEMPLATE_KEYS.join(','));
+    expect(db.toRows()[0]).toMatchObject({ WELL_NAME: 'DEMO-01', DEPTH_m: 0, UTM_E: 1, UTM_N: 2, DEV_ANGLE: 6, AZIMUTH: 5, DIP: 84 });
   });
 });

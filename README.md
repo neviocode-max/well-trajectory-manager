@@ -89,6 +89,23 @@ src/
 └── utils/        shared utilities
 ```
 
+## Default survey template
+
+Database load/append, Data Viewer copy/export, and master/per-well database exports use this order:
+
+```text
+WELL_NAME,DEPTH_ft,DEPTH_m,DEV_ANGLE,AZIMUTH,DIP,SURV_Type,BHT,UTM_E,UTM_N,DEPTH_VERT,ELEV_FT
+```
+
+- `DEPTH_m` is measured depth in metres, preferred when both MD columns contain values. `DEPTH_ft` is used when `DEPTH_m` is blank.
+- `UTM_E` and `UTM_N` are metres. `DEPTH_VERT` is TVD in feet; `ELEV_FT` is elevation in feet. Internally, WTM retains metres for calculations.
+- `DEV_ANGLE` is inclination from vertical; `DIP = 90 − DEV_ANGLE` (90° vertical, 0° horizontal). DIP can supply missing inclination. Values provided together must agree within 0.01° for rounding.
+- `SURV_Type` and `BHT` are optional station metadata. Blank values stay blank; supplied text is retained without assuming a BHT unit.
+- Existing `Well/MD/X/Y/Z/TVD/Azimuth/Inclination` and directional `MD/AZI/INC` files remain supported.
+- Trajectory Converter accepts this template and displays, copies, and exports DIP alongside its existing calculated columns.
+
+Download a blank CSV from Database Manager, or use `sample-data/WTM_Database_Template.csv`.
+
 ## Sample data
 
 `sample-data/` contains fictional `DEMO-*` files for development and validation only. Do not commit company well data to this repository.

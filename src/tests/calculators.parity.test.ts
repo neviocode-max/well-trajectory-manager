@@ -38,6 +38,7 @@ describe('WTM 4.3 calculator workflow parity', () => {
       Y: 9200027.561,
       Azimuth: 71.686,
       Inclination: 31.595,
+      DIP: 58.405,
     });
   });
 

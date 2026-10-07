@@ -11,6 +11,34 @@ import {
   type TrajectoryInputType,
 } from '../engine/trajectory';
 import type { WellRecord } from '../types/well';
+import { pickSurveyValue } from '../data/surveyTemplate';
+import type { RawRow } from './delimited';
+
+/** Accept the database template and the existing converter result columns. */
+export function converterInputRows(rows: RawRow[]): {
+  type: TrajectoryInputType;
+  rows: Array<{ well: string; input: string }>;
+} {
+  const aliases: Record<TrajectoryInputType, string[]> = {
+    mMD: ['DEPTH_m', 'mMD'], ftMD: ['DEPTH_ft', 'ftMD'],
+    mTVD: ['mTVD'], ftTVD: ['DEPTH_VERT', 'ftTVD'],
+    mASL: ['mASL'], ftASL: ['ELEV_FT', 'ftASL'],
+  };
+  const type = (Object.keys(aliases) as TrajectoryInputType[])
+    .find(candidate => rows.some(row => pickSurveyValue(row, aliases[candidate]) != null));
+  if (!type || !rows.some(row => pickSurveyValue(row, ['WELL_NAME', 'Well']) != null)) {
+    throw new Error('The file needs WELL_NAME and DEPTH_m or DEPTH_ft (or the existing Well and converter depth columns).');
+  }
+  return {
+    type,
+    rows: rows.map(row => ({
+      well: pickSurveyValue(row, ['WELL_NAME', 'Well']) ?? '',
+      input: pickSurveyValue(row, aliases[type])
+        ?? (type === 'mMD' && pickSurveyValue(row, aliases.ftMD) != null
+          ? String(Number(pickSurveyValue(row, aliases.ftMD)) / FT) : ''),
+    })),
+  };
+}
 
 export interface ConverterRowState {
   well: string;
@@ -107,6 +135,7 @@ export function roundedConversion(output: ConversionOutput): Record<string, stri
     Y: +output.Y.toFixed(3),
     Azimuth: +output.Azimuth.toFixed(3),
     Inclination: +output.Inclination.toFixed(3),
+    DIP: +output.DIP.toFixed(3),
   };
 }
 
