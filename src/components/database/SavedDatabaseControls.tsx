@@ -4,7 +4,7 @@ import { Icon } from '../common/Icon';
 import { Modal } from '../common/Modal';
 import { fmt } from '../../utils/format';
 
-/** Cloud controls are a UI preview until the Azure storage service is connected. */
+/** Cloud controls are a UI preview until a cloud storage service is connected. */
 export function SavedDatabaseControls({ project, crs }: { project: string; crs: string }) {
   const database = useDatabase();
   const snapshot = useDatabaseSnapshot();
@@ -36,7 +36,7 @@ export function SavedDatabaseControls({ project, crs }: { project: string; crs: 
           </select>
         </div>
         <div className="saved-db-actions">
-          <button type="button" disabled title="Connect Azure storage to update a saved database">Save Changes</button>
+          <button type="button" disabled title="Connect cloud storage to update a saved database">Save Changes</button>
           <button type="button" className="primary" disabled={!hasDatabase} onClick={openSaveAs} title={hasDatabase ? 'Preview the Save As form; cloud saving is not connected yet' : 'Load a database to preview Save As'}>Save As…</button>
         </div>
       </div>
@@ -48,11 +48,11 @@ export function SavedDatabaseControls({ project, crs }: { project: string; crs: 
       </div>
       <div className="saved-db-notice" id="saved-database-help">
         <Icon name="info" size={16} />
-        <div><strong>Azure storage not connected</strong><p>Uploads stay in the current browser session. Export a CSV to keep a copy. Saved databases will appear here once cloud storage is connected.</p></div>
+        <div><strong>Cloud storage not connected</strong><p>Uploads stay in the current browser session. Export a CSV to keep a copy. Saved databases will appear here once cloud storage is connected.</p></div>
       </div>
 
       <Modal open={saveAsOpen} title="Save Database As" subtitle="Preview the name and details for a new saved database." onClose={() => setSaveAsOpen(false)} footer={
-        <><button type="button" onClick={() => setSaveAsOpen(false)}>Close Preview</button><button type="button" className="primary" disabled title="Azure storage must be connected before saving">Save to Azure</button></>
+        <><button type="button" onClick={() => setSaveAsOpen(false)}>Close Preview</button><button type="button" className="primary" disabled title="Cloud storage must be connected before saving">Save to Cloud</button></>
       }>
         <div className="field">
           <label htmlFor="saved-database-name">Database Name</label>
