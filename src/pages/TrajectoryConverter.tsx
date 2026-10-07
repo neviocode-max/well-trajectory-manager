@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { useDatabase, useDatabaseSnapshot } from '../app/DatabaseContext';
+import { blankConverterRow as blankRow, createConverterRows as createRows, MIN_CONVERTER_ROWS as MIN_ROWS, type useConverterWorkspace } from '../app/ConverterWorkspace';
 import { TYPES, type ConversionOutput, type TrajectoryInputType } from '../engine/trajectory';
 import { copyRows, copyText, exportRows } from '../services/browserFiles';
 import { parseDelimited } from '../services/delimited';
@@ -11,7 +12,6 @@ import type { ConverterFocusRequest, StudioFocusRequest } from '../types/studio'
 
 const INPUT_TYPES = Object.keys(TYPES) as TrajectoryInputType[];
 const OUTPUT_COLUMNS: Array<keyof ConversionOutput> = ['mMD', 'ftMD', 'mTVD', 'ftTVD', 'mASL', 'ftASL', 'X', 'Y', 'Azimuth', 'Inclination', 'DIP'];
-const MIN_ROWS = 8;
 
 const HEADERS: Record<string, string> = {
   Well: 'Well', mMD: 'mMD', ftMD: 'ftMD', mTVD: 'mTVD', ftTVD: 'ftTVD',
@@ -22,14 +22,6 @@ const HEADERS: Record<string, string> = {
 type FillRole = 'well' | 'input';
 interface FillSelection { role: FillRole; anchor: number; start: number; end: number }
 interface FillDrag { role: FillRole; srcStart: number; srcEnd: number; target: number }
-
-function blankRow(): ConverterRowState {
-  return { well: '', input: '', output: null, error: '' };
-}
-
-function createRows(count = MIN_ROWS): ConverterRowState[] {
-  return Array.from({ length: Math.max(MIN_ROWS, count) }, blankRow);
-}
 
 function populated(row: ConverterRowState): boolean {
   return Boolean(row.well.trim()) || row.input.trim() !== '';
@@ -44,15 +36,13 @@ function normalized(selection: FillSelection | null): FillSelection | null {
   return { ...selection, start: Math.min(selection.start, selection.end), end: Math.max(selection.start, selection.end) };
 }
 
-export function TrajectoryConverter({ onShowInStudio, focusRequest, onFocusConsumed }: { onShowInStudio?: (request: StudioFocusRequest) => void; focusRequest?: ConverterFocusRequest | null; onFocusConsumed?: () => void }) {
+export function TrajectoryConverter({ workspace, onShowInStudio, focusRequest, onFocusConsumed }: { workspace: ReturnType<typeof useConverterWorkspace>; onShowInStudio?: (request: StudioFocusRequest) => void; focusRequest?: ConverterFocusRequest | null; onFocusConsumed?: () => void }) {
   const database = useDatabase();
   const snapshot = useDatabaseSnapshot();
-  const [inputType, setInputType] = useState<TrajectoryInputType>('mMD');
-  const [rows, setRows] = useState<ConverterRowState[]>(() => createRows());
+  const { inputType, setInputType, rows, setRows, activeRow, setActiveRow } = workspace;
   const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
   const [fillSelection, setFillSelection] = useState<FillSelection | null>(null);
   const [fillPreviewTarget, setFillPreviewTarget] = useState<number | null>(null);
-  const [activeRow, setActiveRow] = useState<number | null>(null);
   const [message, setMessage] = useState<MessageState | null>(null);
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -61,12 +51,6 @@ export function TrajectoryConverter({ onShowInStudio, focusRequest, onFocusConsu
 
   const recalc = (row: ConverterRowState, type = inputType): ConverterRowState =>
     calculateConverterRow(database.get(row.well), row.well, type, row.input);
-
-  useEffect(() => {
-    setRows(current => current.map(row => populated(row) ? recalc(row) : row));
-    // Recalculate whenever the database is replaced/edited/appended.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snapshot.revision]);
 
   useEffect(() => {
     if (!focusRequest) return;

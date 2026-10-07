@@ -5,6 +5,7 @@ import { NAV_MODULES, type ModuleId } from './app/navigation';
 import { Dashboard } from './pages/Dashboard';
 import { DatabaseManager } from './pages/DatabaseManager';
 import { TrajectoryConverter } from './pages/TrajectoryConverter';
+import { useConverterWorkspace } from './app/ConverterWorkspace';
 import { TrajectorySplitter } from './pages/TrajectorySplitter';
 import { CoordinateConverter } from './pages/CoordinateConverter';
 import type { ClosestApproachHandoff } from './pages/WellDistance';
@@ -34,6 +35,7 @@ function WtmShell() {
   const [studioHandoff, setStudioHandoff] = useState<ClosestApproachHandoff | null>(null);
   const [studioFocus, setStudioFocus] = useState<StudioFocusRequest | null>(null);
   const [converterFocus, setConverterFocus] = useState<ConverterFocusRequest | null>(null);
+  const converterWorkspace = useConverterWorkspace();
 
   const module = useMemo(() => NAV_MODULES.find(item => item.id === moduleId) ?? NAV_MODULES[0], [moduleId]);
   const stats = database.stats();
@@ -66,7 +68,7 @@ function WtmShell() {
     switch (moduleId) {
       case 'dashboard': return <Dashboard />;
       case 'database': return <DatabaseManager onPlotWell={well => openStudio({ well, token: Date.now() })} />;
-      case 'calculator': return <TrajectoryConverter focusRequest={converterFocus} onFocusConsumed={() => setConverterFocus(null)} onShowInStudio={openStudio} />;
+      case 'calculator': return <TrajectoryConverter workspace={converterWorkspace} focusRequest={converterFocus} onFocusConsumed={() => setConverterFocus(null)} onShowInStudio={openStudio} />;
       case 'splitter': return <TrajectorySplitter />;
       case 'coordinate': return <CoordinateConverter />;
       case 'distance': return <WellDistance onShowClosestApproach={handoff => { setStudioFocus(null); setStudioHandoff(handoff); setModuleId('studio'); }} />;
